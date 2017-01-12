@@ -16,31 +16,57 @@
         android:text="Hello World!"
         android:id="@+id/textView" />
 
-    <TextView
-        android:text="Spot1"
+    <Button
+        android:text="Manual Entry"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="95dp"
-        android:id="@+id/textView2"
-        android:layout_below="@+id/textView"
-        android:layout_centerHorizontal="true" />
+        android:id="@+id/buttonMain"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="113dp"
+        android:onClick="editSpots"/>
 
     <TextView
         android:text="Spot2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView2"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="26dp"
-        android:id="@+id/textView3" />
+        android:id="@+id/textView2"
+        android:layout_above="@+id/buttonMain"
+        android:layout_alignLeft="@+id/textView1"
+        android:layout_alignStart="@+id/textView1"
+        android:textSize="36sp"
+        android:visibility="visible"
+        android:layout_marginBottom="93dp" />
 
-    <Button
-        android:text="Manual Entry"
+    <TextView
+        android:text="Spot1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView3"
+        android:id="@+id/textView1"
+        android:layout_above="@+id/textView2"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="76dp"
-        android:id="@+id/button" />
+        android:textSize="36sp"
+        android:layout_marginBottom="58dp" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Name"
+        android:ems="10"
+        android:layout_alignBottom="@+id/textView1"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/editText1" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Name"
+        android:ems="10"
+        android:layout_alignBottom="@+id/textView2"
+        android:layout_alignLeft="@+id/editText1"
+        android:layout_alignStart="@+id/editText1"
+        android:id="@+id/editText2" />
 
 </RelativeLayout>
