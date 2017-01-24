@@ -2,8 +2,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.jpsoloproject.jp.tandemparking.MainActivity" >
-    <item android:id="@+id/action_settings_apartment_setup"
-        android:title="@string/apartment_setup"
+    <item android:id="@+id/action_settings_setup"
+        android:title="@string/setup"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/action_settings_service_on"
+        android:title="@string/manual_service_on"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/action_settings_service_off"
+        android:title="@string/manual_service_off"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item android:id="@+id/debug"
+        android:title="@string/debug"
         android:orderInCategory="100"
         app:showAsAction="never" />
 </menu>

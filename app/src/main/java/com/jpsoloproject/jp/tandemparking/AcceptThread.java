@@ -19,11 +19,11 @@ public class AcceptThread extends Thread {
         try {
             // MY_UUID is the app's UUID string, also used by the client code.
             tmp = mBluetoothAdapter.listenUsingRfcommWithServiceRecord("TandemParking", MainActivity.MY_UUID);
+            Log.d(MainActivity.TAG, "Socket's listen() method ",null);
         } catch (IOException e) {
             Log.e(MainActivity.TAG, "Socket's listen() method failed", e);
         }
         mmServerSocket = tmp;
-
     }
 
     public void run() {
@@ -32,6 +32,7 @@ public class AcceptThread extends Thread {
         while (true) {
             try {
                 socket = mmServerSocket.accept();
+                Log.d(MainActivity.TAG, "Socket accepted",null);
             } catch (IOException e) {
                 Log.e(MainActivity.TAG, "Socket's accept() method failed", e);
                 break;

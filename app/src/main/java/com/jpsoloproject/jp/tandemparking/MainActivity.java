@@ -1,22 +1,22 @@
 package com.jpsoloproject.jp.tandemparking;
 
-import android.app.Notification;
-import android.app.NotificationManager;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -39,30 +39,29 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.Set;
 import java.util.UUID;
 
-import static android.bluetooth.BluetoothProfile.GATT;
-import static android.bluetooth.BluetoothProfile.STATE_CONNECTED;
-import static android.bluetooth.BluetoothProfile.STATE_CONNECTING;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
     protected static final String TAG = "Listener";
     protected static final UUID MY_UUID = UUID.fromString("bd3e97dc-25ae-44a2-bd0c-b6ab463928a1");
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    protected TextView txtSpot1;
-    protected TextView txtSpot2;
+    public static final String MY_GLOBAL_PREFS = "my_global_prefs";
+    private static final String DB_SPOT1 = "db_spot1";
+    private static final String DB_SPOT2 = "db_spot2";
+    public static String myself;
+    public static String bluetoothNameToListenFor;
+
+    private static boolean isFirstTime;
+    public static TextView txtSpot1;
+    public static TextView txtSpot2;
     protected EditText edtText1;
     protected EditText edtText2;
     protected Button btnMain;
     protected boolean isFrontPageShown;
     protected static TextView debugText;
-    public FirebaseDatabase database = FirebaseDatabase.getInstance();
+    public static FirebaseDatabase database = FirebaseDatabase.getInstance();
     private GoogleApiClient client;
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private boolean isListeningInBackground = false;
+    protected static boolean isListeningInBackground = false;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
@@ -78,23 +77,37 @@ public class MainActivity extends AppCompatActivity {
         btnMain = (Button) findViewById(R.id.buttonMain);
         debugText = (TextView) findViewById(R.id.textView);
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        this.registerReceiver(mReceiver, filter);
+        //reads from disk
+        SharedPreferences prefs =
+                getSharedPreferences(MY_GLOBAL_PREFS, MODE_PRIVATE);
+        isFirstTime = prefs.getBoolean("isFirstTime", true);
+
+        if (isFirstTime) {
+            //writes to disk
+            SharedPreferences.Editor editor =
+                    getSharedPreferences(MY_GLOBAL_PREFS, MODE_PRIVATE).edit();
+            editor.putBoolean("isFirstTime", false);
+            editor.apply();
+            Log.d(TAG, "isFirstTime: " + isFirstTime);
 
 
-        if (mBluetoothAdapter == null) {
+
+        } else {
+            Log.d(TAG, "isFirstTime: " + isFirstTime);
+        }
+
+
+
+
+        if (thereIsNoBluetoothOnThisDevice()) {
             Context context = getApplicationContext();
             CharSequence text = "This device does not support bluetooth";
             int duration = Toast.LENGTH_LONG;
             Toast toast = Toast.makeText(context, text, duration);
             toast.show();
         } else {
-            if (!mBluetoothAdapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            if (isBluetoothNotOn()) {
+                turnBluetoothOn();
             } else {
                 Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
                 if (pairedDevices.size() > 0) {
@@ -105,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
                         String deviceHardwareAddress = device.getAddress(); // MAC address
                         if (deviceName.equals("SmartWatch 2")) {
 
-
                             }
 
                             BluetoothSocket socket = null;
@@ -113,13 +125,6 @@ public class MainActivity extends AppCompatActivity {
                             if (!isListeningInBackground) {
                                 isListeningInBackground = isListeningForTheBluetooth();
 
-//                                final BluetoothManager bluetoothManager =
-//                                        (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-//                            if () {
-//                                debugText.setText("SW2 connected");
-//                            } else {
-//                                debugText.setText("Not connected");
-//                            }
 
 
                         } else {
@@ -130,30 +135,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-//            // Write a message to the database
-//            FirebaseDatabase database = FirebaseDatabase.getInstance();
-//            DatabaseReference myRef = database.getReference("message");
-//            myRef.setValue("Hello, World!");
-//            // Read from the database
-//            myRef.addValueEventListener(new ValueEventListener() {
-//                @Override
-//                public void onDataChange(DataSnapshot dataSnapshot) {
-//                    // This method is called once with the initial value and again
-//                    // whenever data at this location is updated.
-//                    String value = dataSnapshot.getValue(String.class);
-//                    Log.d(TAG, "Value is: " + value);
-//                }
-//
-//                @Override
-//                public void onCancelled(DatabaseError error) {
-//                    // Failed to read value
-//                    Log.w(TAG, "Failed to read value.", error.toException());
-//                }
-//            });
 
 
             DatabaseReference DBspot1 = database.getReference("Spot 1");
-            DBspot1.setValue("Olivia");
+//            DBspot1.setValue("Olivia");
             // Read from the database
             DBspot1.addValueEventListener(new ValueEventListener() {
                 @Override
@@ -174,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             DatabaseReference DBspot2 = database.getReference("Spot 2");
-            DBspot2.setValue("Adam");
+//            DBspot2.setValue("Adam");
             // Read from the database
             DBspot2.addValueEventListener(new ValueEventListener() {
                 @Override
@@ -202,51 +187,10 @@ public class MainActivity extends AppCompatActivity {
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-
-//        NewMessageNotification myNewMessageNotification;
-//        myNewMessageNotification.notify();
-
-    //The BroadcastReceiver that listens for bluetooth broadcasts
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                 //Device found
-            }
-            else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-                //Device is now connected
-                String deviceName = device.getName();
-                String deviceHardwareAddress = device.getAddress(); // MAC address
-                if (deviceName.equals("SmartWatch 2")) {
-
-                    MainActivity.debugText.setText("is now connected");
-                    NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    Notification notify = new Notification.Builder(getApplicationContext())
-                            .setContentTitle("Title").setContentText("Text").setContentTitle("Title1")
-                            .setSmallIcon(R.drawable.common_google_signin_btn_icon_dark).build();
-                    notify.flags |= Notification.FLAG_AUTO_CANCEL;
-                    nm.notify(0,notify);
-                }
-
-
-            }
-            else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                //Done searching
-                MainActivity.debugText.setText("done searching");
-            }
-            else if (BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED.equals(action)) {
-                //Device is about to disconnect
-                MainActivity.debugText.setText("about to dc");
-            }
-            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-                //Device has disconnected
-                MainActivity.debugText.setText("has disconnected");
-            }
-        }
-    };
+    /**
+     * The button that corresponds to the manual editing when entering state 3 or user clicks button
+     * @param view
+     */
     public void editSpots(View view) {
         // Do something in response to button
 
@@ -284,12 +228,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void stopService(View view) {
+        isListeningInBackground = stoppedListeningForTheBluetooth();
+    }
+    public boolean stoppedListeningForTheBluetooth() {
         Intent intent = new Intent(this, MyService.class);
         stopService(intent);
-        isListeningInBackground = false;
+        return false;
     }
 
-    public boolean loadTheFrontPage() {
+    private boolean loadTheFrontPage() {
         txtSpot1.setVisibility(View.VISIBLE);
         txtSpot2.setVisibility(View.VISIBLE);
 
@@ -355,15 +302,49 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings_apartment_setup) {
+        if (id == R.id.action_settings_setup) {
+            Intent intent = new Intent(this, Setup.class);
+            startActivity(intent);
             return true;
+        } else if (id == R.id.action_settings_service_on) {
+            isListeningInBackground = isListeningForTheBluetooth();
+        } else if (id == R.id.action_settings_service_off) {
+            isListeningInBackground = stoppedListeningForTheBluetooth();
+        } else if (id == R.id.debug) {
+            Intent intent = new Intent(this, Debug.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public void apartmentSetup(View view) {
-
+    private boolean thereIsNoBluetoothOnThisDevice() {
+        return mBluetoothAdapter == null;
     }
+    private boolean isBluetoothNotOn() {
+        return !mBluetoothAdapter.isEnabled();
+    }
+    private void turnBluetoothOn() {
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+    }
+
+    /**
+     * The edit manually "page" is not a separate Activity. Therefore, a back press exits the program.
+     * This intercepts the back button only when viewing the edit manually page to return to the display page.
+     * @param keyCode
+     * @param event
+     * @return
+     */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)  {
+        if (keyCode == KeyEvent.KEYCODE_BACK && !isFrontPageShown) {
+            Log.d("CDA", "onKeyDown Called");
+            isFrontPageShown = loadTheFrontPage();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
 
 }
